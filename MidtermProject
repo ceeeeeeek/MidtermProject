@@ -864,7 +864,6 @@ istream &operator >>(istream& input, Semester& sem)
     return input;
 }
 ---------------------------------------------------------------------
-CourseSchedule.h
 //Step 5: CourseSchedule Class Definition/Header (.h file) with const member functions
 #ifndef COURSESCHEDULE_H
 #define COURSESCHEDULE_H
@@ -894,8 +893,7 @@ class CourseSchedule
     public:
         //1. CourseSchedule user-based default constructor with 3 arguments
         CourseSchedule(const string & = "Student Name", const Semester & = Semester(), int = 0);
-        //CourseSchedule copy constructor prototype
-        CourseSchedule(const CourseSchedule &);
+        CourseSchedule(const CourseSchedule &); //CourseSchedule copy constructor prototype
 
         //2. Create a destructor that de-allocates memory appropriately when a CourseSchedule is destroyed.
         ~CourseSchedule();
@@ -912,13 +910,10 @@ class CourseSchedule
 
         bool addCourse(const Course&); //6. Create a function named AddCourse that takes a Course as an argument and adds the course to the ClassSchedule array.
         bool removeCourse(const Course&); //8. Create a function called reomveCourse that allows the user to delete a course from their schedule.
-
-      
-        //overloaded operator(s)
-        //void operator=(const CourseSchedule&) const;
 };
 
 #endif
+
 ---------------------------------------------------------------------
 CourseSchedule.cpp
 //Step 5: CourseSchedule Class Implementaion (.cpp file) with const member functions
