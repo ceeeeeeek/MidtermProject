@@ -1,0 +1,1086 @@
+//Step 6: Client Program
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+#include "CourseSchedule.h"
+
+int main() 
+{
+    char userChoice;
+
+    string userName;
+    string semesterName;
+    string courseName;
+    string courseNumber;
+    double courseNumberOfUnits;
+    string meetingDays;
+    Time startTime;
+    Time endTime;
+    Date startDate;
+    Date endDate;
+    int maximumNumberOfClasses;
+
+    cout << "Please enter your name: ";
+    getline(cin, userName);
+    cout << "PLease enter the semester name: ";
+    getline(cin, semesterName);
+    cout << "Please enter the start date (in this format mo/day/yr): ";
+    cin >> startDate;
+    cout << "Please enter the end date (in this format mo/day/yr): ";
+    cin >> endDate;
+    cout << "Please enter the maximum number of classes you would like to have: ";
+    cin >> maximumNumberOfClasses;
+
+    Semester semester(semesterName, startDate, endDate);
+    CourseSchedule studentCourseSchedule(userName, semester, maximumNumberOfClasses);
+
+    do 
+    {
+        cout << "COURSE ENTRY MENU FOR: " << semester << endl;
+        cout << "-----------------------------------------------------------------------" << endl;
+        cout << "1) Enter a new course" << endl;
+        cout << "2) Remove a course" << endl;
+        cout << "3) Print a Semester Schedule" << endl;
+        cout << "q) Quit the program" << endl;
+        cin >> userChoice;
+        cin.ignore();
+
+        switch (userChoice) 
+        {
+            case '1':
+            {
+                if (studentCourseSchedule.getNumCourses() == maximumNumberOfClasses)
+                {
+                    cout << endl << "The class schedule is full. Please remove a class to make room to add a desired class." << endl;
+                    break;
+                }
+
+                cout << "Please enter the course number: ";
+                    getline(cin, courseNumber);
+                cout << "Please enter the course name: ";
+                    getline(cin, courseName);
+                cout << "Please enter the number of units for the course: ";
+                    cin >> courseNumberOfUnits;
+                    cin.ignore();
+                cout << "Please enter the class meeting days: ";
+                    getline(cin, meetingDays);
+                cout << "Please enter the class starting time (in this format hour:minute AM/PM): ";
+                    cin >> startTime;
+                cout << "Please enter the class ending time (in this format hour:minute AM/PM): ";
+                    cin >> endTime;
+                cout << "Please enter the class start date (in this format mo/day/yr): ";
+                    cin >> startDate;
+                cout << "Please enter the class end date (in this format moh/day/yr): ";
+                    cin >> endDate;
+
+                Course course(courseNumber, courseName, meetingDays, courseNumberOfUnits, startDate, endDate, startTime, endTime);
+
+                if (studentCourseSchedule.addCourse(course))
+                {
+                    cout << "Course has been added." << endl;
+                }
+                else
+                {
+                    cout << "That input was invalid" << endl;
+                }
+                break;
+            }
+            case '2':
+            {
+                if (studentCourseSchedule.getNumCourses() == 0)
+                {
+                    cout << "\nThere are no courses to remove.\n";
+                    break;
+                }
+                    cout << "Please enter the course number: ";
+                    getline(cin, courseNumber);
+                    cout << "Please enter the course name: ";
+                    getline(cin, courseName);
+
+                    Course course(courseNumber, courseName);
+
+                if (studentCourseSchedule.removeCourse(course)) 
+                {
+                    cout << "Course has been removed." << endl;
+                }
+                else 
+                {
+                    cout << "That input was invalid." << endl;
+                }
+                break;
+            }
+            case '3':
+            {
+                cout << studentCourseSchedule;
+                break;
+            }
+            case 'Q':
+            {
+                cout << "Thank you for using our course entry menu!" << endl;
+                break;
+            }
+            case 'q':
+            {
+                cout << "Thank you for using our course entry menu!" << endl;
+                break;
+            }
+            default:
+            {
+                cout << "Invalid option. Please try again." << endl;
+                break;
+            }
+        }
+    }while (toupper(userChoice) != ('Q') || userChoice != ('q'));
+
+    //system("PAUSE");
+    //return 0;
+}
+
+---------------------------------------------------------------------
+
+Time.h
+
+//Step 1: Time Class Definition/Header (.h file) with const member functions.
+//1. Remove the "seconds" member variable. You will need to remove the corresponding member functions and any functions where "seconds" was used as a parameter.
+#ifndef TIME_H
+#define TIME_H
+
+class Time
+{
+    //3.Overload the << operator for this Time class.
+    //4. Overload the >> operator for this Time class.
+    friend ostream &operator<<(ostream&, const Time&);
+    friend istream &operator>>(istream&, Time&);
+
+    private:
+        void standardTimeToUniversal(int, int, string);
+        int hour;  //0-23 (24 hour clock format)
+        int minute; //0-59
+    
+    public:
+        //Time user-based default constructor
+        Time(int = 0, int = 0);
+
+        //set functions - not const since they modify private data
+        //The & return type enables cascading
+        //2. Create a utility function that convertts standard time to universal time.
+        //utility function with 2 int parameters/arguments: setHour and setMinute.
+        Time &setTime(int, int);
+        //setHour and setMinute are the 2 int parameters/arguments in setTime
+        Time &setHour(int);
+        Time &setMinute(int);
+
+        //get functions - (normally always declared const)
+        int getHour() const;
+        int getMinute() const;
+
+        //print functions - (normally always declared const since they do not modify private members, merely inspect
+        void printUniversal() const;
+        void printStandard()const;
+
+        //5. Overload the - (subtraction) operator.
+        //overloaded operator(s)
+        double operator-(const Time&);
+};
+
+#endif
+---------------------------------------------------------------------
+Time.cpp 
+
+//Step 1: Time Class Implementation(.cpp file) with const member functions
+//1. Remove the "seconds" member variable. You will need to remove the corresponding member functions and any functions where "seconds" was used as a parameter.
+#include <iostream>
+#include <iomanip>
+using namespace std;
+
+#include "Time.h"
+
+//Time user-based default constructor
+//Constructor function to initialize private data
+//remember a constructor is called whenever a new object of
+//a class data type is instantiated, if a constructor is not defined the C++ do 
+//nothing constructor is run, it is better to ALWAYS have your own contructor
+//once you have your own constructor the default is no longer available
+//Constructors can and should be overloaded
+//Constructors cannot be const since they always manipulate private data
+Time::Time(int hour, int minute)
+{
+    setTime(hour, minute);
+}
+
+/*SET FUNCTIONS: Never const since they need to modify private member data*/
+//2. Create a utility function that convertts standard time to universal time.
+//utility function with 2 int parameters/arguments: setHour and setMinute
+//setTime function now is set up to enable cascading
+Time &Time::setTime(int hour, int minute)
+{
+    setHour(hour);
+    setMinute(minute);
+    return *this;
+}
+
+//setHour function is now set up to enable cascading
+Time &Time::setHour(int h)
+{
+    hour = (h >= 0 && h < 24) ? h : 0;  //validates hour, if valid set to h, else set to 0
+    return *this;
+}
+
+//setMinute function is now set up to enable cascading
+Time &Time::setMinute(int m)
+{
+    minute = (m >= 0 && m < 24) ? m : 0;  //validates minute, if valid set to m, else set to 0
+    return *this;
+}
+
+/*GET FUNCTIONS:  Do not modify private member data normally always const*/
+//get Hour
+int Time::getHour() const  //must be const since prototype is const
+{
+    return hour;
+}
+
+//get Minute
+int Time::getMinute() const  //must be const since prototype is const
+{
+    return minute;
+}
+
+/*PRINT FUNCTIONS:  Normally do not modify private member data so should be const*/
+void Time::printUniversal() const  //must be const since prototype is const
+{
+    cout << setfill('0') << setw(2) << hour << ":"
+        << setw(2) << minute << ":" << setw(2) << endl;
+}
+
+void Time::printStandard() const  //must be const since prototype is const
+{
+    cout << ((hour == 0 || hour == 12) ? 12 : hour % 12) << ":"
+        << setfill('0') << setw(2) << minute << ":"
+        << setw(2) << (hour < 12 ? "AM" : "PM") << endl;
+}
+
+//private utility function to convert standard time to universal
+void Time::standardTimeToUniversal(int hr, int min, string meridiem)
+{
+    if (hr == 12)
+    {
+        hr = 0;
+    }
+    if (meridiem == "AM")
+    {
+        setTime(hr, min);
+    }
+    else if (meridiem == "PM")
+    {
+        setTime(hr + 12, min);
+    }
+}
+
+//3.Overload the << operator for this Time class.
+//overloaded stream insertion operator << is now set up to enable cascading for class Time
+//as shown by ostream &operator <<(ostream &output, const Time &time1) and returning
+//output.
+ostream &operator <<(ostream& output, const Time& time1)
+{
+    int hr = time1.hour;
+    int min = time1.minute;
+    output << ((hr == 0 || hr == 12) ? 12 : hr % 12) << ":"
+        << setfill('0') << setw(2) << min << " " << (hr < 12 ? "AM" : "PM");
+
+    return output;
+}
+
+//4. Overload the >> operator for this Time class.
+//overloaded stream extraction operator >> is now set up to enable cascading for class Time
+//as shown by istream &operator >>(istream &input, Time &time1) and returning
+//input.
+istream &operator >>(istream& input, Time& time1)
+{
+    int hr, min;
+    string meridiem;
+    input >> setw(2) >> hr;
+    input.ignore();
+    input >> setw(2) >> min;
+    input.ignore();
+    input >> setw(2) >> meridiem;
+    if (meridiem == "AM" || meridiem == "am")
+    {
+        time1.standardTimeToUniversal(hr, min, meridiem);
+    }
+    else if (meridiem == "PM" || meridiem == "pm")
+    {
+        time1.standardTimeToUniversal(hr, min, meridiem);
+    }
+    return input;
+}
+
+//5. Overload the - (subtraction) operator.
+//overloaded operator(s) taking two Time instances double and minute and caluclating the hours and mintues between them.
+double Time::operator-(const Time &instance)
+{
+    double timeDifference;
+    timeDifference = double(hour) + double(minute) / 60.00 - double(instance.hour) - double(instance.minute) / 60.00;
+    return timeDifference;
+}
+---------------------------------------------------------------------
+Date.h
+//Step 2: Date Class Definition/Header (.h file) with const member functions.
+//1. Remove the print function and all occurences of it Also remove any printing done in the constructor and remove the destructor.
+#ifndef DATE_H
+#define DATE_H
+
+class Date
+{
+    //3.Overload the << operator for this Date class.
+    //4. Overload the >> operator for this Date class.
+    friend ostream &operator<<(ostream&, const Date&);
+    friend istream &operator>>(istream&, Date&);
+
+    private:
+        int month; //1-12
+        int day; //1-31 depending on month
+        int year; //any year
+
+        //utility function to check if day is proper for month and year
+        int checkDay(int) const;
+
+    public:
+        //Date user-created default constructor
+        Date(int = 1, int = 1, int = 1990);
+
+        //set functions - not const since they modify private data
+        //The & return type enables cascading
+        //2. Add get and set functions for all the member variables.
+        //utility function with 3 int arguments/parameters: setMonth, setDay, setYear
+        void setDate(int, int, int);
+        //setMonth, setDay, setYear are the 3 int arguments/parameters in setDate
+        Date &setMonth(int);
+        Date &setDay(int);
+        Date &setYear(int);
+
+        //get functions - (normally always declared const)
+        int getMonth() const;
+        int getDay() const;
+        int getYear() const;
+
+        //5. Overload the >, <, >=, <=, ==, and != operators for this Date class.
+        //overloaded operator(s)
+        bool operator>(const Date&) const;
+        bool operator<(const Date&) const;
+        bool operator>=(const Date&) const;
+        bool operator<=(const Date&) const;
+        bool operator==(const Date&) const;
+        bool operator!=(const Date&) const;
+};
+
+#endif
+---------------------------------------------------------------------
+Date.cpp
+//Step 2: Date Class Implementation (.cpp file) with const member functions
+#include <iostream>
+#include <iomanip>
+using namespace std;
+
+#include "Date.h"
+
+//Date user-created default constructor
+Date::Date(int mn, int dy, int yr)
+{
+    setDate(mn, dy, yr);
+}
+
+//utility function with 3 int arguments/parameters: setMonth, setDay, setYear
+void Date::setDate(int mn, int dy, int yr)
+{
+    if (mn > 0 && mn <= 12)
+    {
+        month = mn;
+    }
+
+    else
+    {
+        month = 1;
+        cout << "Month set to one - INVALID" << endl;  //BAD DESIGN!
+    }
+
+    year = yr;  //could also validate year
+
+    day = checkDay(dy);  //to validate the day
+
+    cout << endl;
+}
+
+//PRIVATE COST UTILITY FUNCTION
+int Date::checkDay(int testDay) const
+{
+    static const int daysPerMonth[13] = { 0,31,28,31,30,31,30,31,31,30,31,30,31 };
+
+    if (testDay > 0 && testDay <= daysPerMonth[month])
+    {
+        return testDay;
+    }
+
+    //determine whether testDay is valid for a specific month
+    if (month == 2 && testDay == 29 && (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)))
+    {
+        return testDay;
+    }
+
+    cout << "Invalid Day " << testDay << " was set to 1" << endl;
+    return 1;  //keep data in valid state
+}
+
+//set functions - not const since they modify private data
+//setYear function is now set up to enable cascading
+Date &Date::setYear(int yr) 
+{
+    year = (yr > 0) ? yr : 0;
+    return *this;
+}
+
+//setMonth function is now set up to enable cascading
+Date &Date::setMonth(int mn) 
+{
+    month = (mn <= 1 || mn <= 12) ? mn : 0; //not month = (mn >= 1 || mn <= 12) ? mn : 0; ?? mn >= 1?
+    return *this;
+}
+
+//setDay function is now set up to enable cascading
+Date &Date::setDay(int dy) 
+{
+    day = dy;
+    return *this;
+}
+
+//get functions - not const since they modify private data
+int Date::getDay() const 
+{
+    return day;
+}
+
+int Date::getMonth() const 
+{
+    return month;
+}
+
+int Date::getYear() const 
+{
+    return year;
+}
+
+//3.Overload the << operator for this Date class.
+//overloaded stream insertion operator << is now set up to enable cascading for class Date
+//as shown by ostream &operator <<(ostream &output, const Time &time1) and returning
+//output
+ostream &operator <<(ostream& output, const Date& date1)
+{
+    output << setw(2) << setfill('0') << date1.month << '/' << setw(2) << date1.day << '/' << date1.year;      
+    return output;
+}
+
+//4. Overload the >> operator for this Date class.
+//overloaded stream extraction operator >> is now set up to enable cascading for class Date
+//as shown by istream &operator >>(istream &input, Time &time1) and returning
+//time1.standardTimeToUniversal(hr, min, meridiem); and time1.standardTimeToUniversal(hr, min, meridiem);
+//and input;
+istream &operator >>(istream& input, Date& date1)
+{
+    input >> setw(2) >> date1.month;
+    input.ignore();
+    input >> setw(2) >> date1.day;
+    input.ignore();
+    input >> setw(4) >> date1.year;
+    return input;
+}
+
+//5. Overload the >, <, >=, <=, ==, and != operators for this Date class.
+//6 overloaded operators
+//overloaded operator #1 >
+bool Date::operator>(const Date& instance) const 
+{
+    if (year > instance.year) 
+    {
+        return true;
+    }
+    else if (year == instance.year && month > instance.month)
+    {
+        return true;
+    }
+    else if (year == instance.year && month == instance.month && day > instance.day) 
+    {
+        return true;
+    }
+    return false;
+}
+
+//overloaded operator #2 <
+bool Date::operator<(const Date& instance) const 
+{
+    if (year < instance.year) 
+    {
+        return true;
+    }
+    else if (year == instance.year && month < instance.month) 
+    {
+        return true;
+    }
+    else if (year == instance.year && month == instance.month && day < instance.day) 
+    {
+        return true;
+    }
+    return false;
+}
+
+//overloaded operator #3 >=
+bool Date::operator>=(const Date& instance) const 
+{
+    return (operator>(instance) || operator==(instance));
+}
+
+//overloaded operator #4 <=
+bool Date::operator<=(const Date& instance) const 
+{
+    return (operator<(instance) || operator==(instance));
+}
+
+//overloaded operator #5 ==
+bool Date::operator==(const Date& instance) const 
+{
+    return (month == instance.month && day == instance.day && year == instance.year);
+}
+
+//overloaded operator #6 !=
+bool Date::operator!=(const Date& instance) const 
+{
+    return (operator==(instance) == false);
+}
+
+---------------------------------------------------------------------
+Course.h 
+
+//Step 3: Course Class Definition/Header (.h file) with const member functions
+#ifndef COURSE_H
+#define COURSE_H
+
+#include "Date.h"
+#include "Time.h"
+
+class Course
+{
+    //7. Overload the << operator for this class.
+    friend ostream &operator<<(ostream&, const Course&);
+
+    private:
+        string courseNumber; //A course number
+        string courseName; //A course name
+        string courseDays; //A variable for the course meeting days
+        double courseUnits; //A variable representing the number of units the course is worth.
+        Date startDate; //A Date object for the state date of the class.
+        Date endDate; //A Date object for the end date of the class.
+        Time startTime; //A Time object for the start time of the class.
+        Time endTime; //A Time object for the end time of the class.
+
+    public:
+        //1. Course user-based default constructor with 8 arguments
+        Course(const string & = " ", const string & = " ", const string & = " ",
+            const double = 0, const Date & = Date(), const Date & = Date(), const Time & = Time(),
+            const Time & = Time());
+
+        //2. Create a destructor that prints a message saying a course has been deleted.
+        //Course Destructor
+        ~Course();
+
+        //set functions - not const since they modify private data
+        //The & return type enables cascading
+        //5. Create set functions that ALLOW CASCADING for the following member variables: the course number, the course name, the course meeting days, an the number of units the course is worth.
+        //6. Create set functions for the following the 4 Date and Time member variables 
+        Course &setCourseNumber(const string&);
+        Course &setCourseName(const string&);
+        Course &setCourseDays(const string&);
+        Course &setCourseUnits(const double);
+
+        //get functions - (normally always declared const)
+        //3. Create get functions for the following member variables: the course number, the course name, the course meeting days, an the number of units the course is worth.
+        string getCourseNumber() const;
+        string getCourseName() const;
+        string getCourseDays() const;
+        double getCourseUnits() const;
+        //4. Create get functions for the following the 4 Date and Time member variables 
+        Time getCourseStartTime() const;
+        Time getCourseEndTime() const;
+        Date getCourseStartDate() const;
+        Date getCourseEndDate() const;
+
+        //8. Create a function namesd calcDailyDuration which calculates the hours the student will be in the class for one daily class meeting.
+        double calcDailyDuration() const;
+};
+
+#endif
+---------------------------------------------------------------------
+Course.cpp
+//Step 3: Course Class Implementation (.cpp file) with const member functions
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+#include "Course.h"
+
+//1. Course user-based default constructor with 8 arguments
+//Course user-based default constructor with a member initiazation list.
+Course::Course(const string& cNumber, const string& cName, const string& cDays, const double cUnits, const Date& dStart, const Date& dEnd, const Time& tStart, const Time& tEnd) :
+    courseNumber(cNumber), courseName(cName), courseDays(cDays), courseUnits(cUnits), startDate(dStart), endDate(dEnd), startTime(tStart), endTime(tEnd)
+{
+
+}
+
+//2. Create a destructor that prints a message saying a course has been deleted.
+Course::~Course()
+{
+    cout << "This course has been deleted.\n";
+}
+
+//set functions - not const since they modify private data
+//5. Create set functions that ALLOW CASCADING for the following member variables: the course number, the course name, the course meeting days, an the number of units the course is worth.
+//6. Create set functions for the following the 4 Date and Time member variables 
+//setCourseNumber function is now set up to enable cascading
+Course &Course::setCourseNumber(const string& num)
+{
+    courseNumber = num;
+    return *this;
+}
+
+//setCourseName function is now set up to enable cascading
+Course &Course::setCourseName(const string& name)
+{
+    courseName = name;
+    return *this;
+}
+
+//setCourseDays function is now set up to enable cascading
+Course &Course::setCourseDays(const string& days)
+{
+    courseDays = days;
+    return *this;
+}
+
+//setCourseUnits function is now set up to enable cascading
+Course &Course::setCourseUnits(const double units)
+{
+    courseUnits = units;
+    return *this;
+}
+
+//get functions - (normally always declared const)
+//3. Create get functions for the following member variables: the course number, the course name, the course meeting days, an the number of units the course is worth.
+string Course::getCourseNumber() const
+{
+    return courseNumber;
+}
+
+string Course::getCourseName() const
+{
+    return courseName;
+}
+
+string Course::getCourseDays() const
+{
+    return courseDays;
+}
+
+double Course::getCourseUnits() const
+{
+    return courseUnits;
+}
+
+//4. Create get functions for the following the 4 Date and Time member variables 
+Time Course::getCourseStartTime() const
+{
+    return startTime;
+}
+
+Time Course::getCourseEndTime() const
+{
+    return endTime;
+}
+
+Date Course::getCourseStartDate() const
+{
+    return startDate;
+}
+
+Date Course::getCourseEndDate() const
+{
+    return endDate;
+}
+
+//8. Create a function namesd calcDailyDuration which calculates the hours the student will be in the class for one daily class meeting.
+double Course::calcDailyDuration() const
+{
+    double dailyDur;
+    dailyDur = getCourseStartTime() - getCourseEndTime();
+    return dailyDur;
+}
+
+//7. Overload the << operator for this class.
+//overloaded stream insertion operator << is now set up to enable cascading for class Course
+//as shown by ostream &operator<<(ostream& output, const Course& course) and returning
+//output
+ostream &operator <<(ostream& output, const Course& course)
+{
+    output << setw(16) << setfill(' ') << left << "Course Info:" << course.courseNumber << " -- " << course.courseName << endl
+        << setw(16) << left << "# of Units:" << course.courseUnits << endl
+        << setw(16) << left << "Course Dates:" << course.startDate << " - " << course.endDate << endl
+        << setw(16) << setfill(' ') << left << "Meeting Days:" << course.courseDays << endl
+        << setw(16) << setfill(' ') << left << "Meeting Time:" << course.startTime << " - " << course.endTime << endl
+        << setw(16) << setfill(' ') << left << "Daily Duration:" << course.calcDailyDuration() << " hours" << endl;
+    return output;
+}
+---------------------------------------------------------------------
+Semester.h
+//Step 4: Semester Class Definition/Header (.h file) with const member functions
+#ifndef SEMESTER_H
+#define SEMESTER_H
+
+#include <iostream>
+using namespace std;
+
+#include "Course.h"
+#include "Date.h"
+#include "Time.h"
+
+
+class Semester 
+{
+    friend ostream &operator<<(ostream&, const Semester&);
+    friend istream &operator>>(istream&, Semester&);
+
+    private:
+        string semesterName; //A Semester Name
+        Date startDate; //A Date instance for the start date of the semester.
+        Date endDate; //A date instance for the end date of the semester. 
+
+    public:
+        //Semester user-based constructor
+        Semester(const string & = " ", const Date & = Date(), const Date & = Date());
+
+        //set functions - not const since they modify private data
+        //The & return type enables cascading
+        Semester &setSemesterName(string);
+        Semester &setSemesterStartDate(int, int, int);
+        Semester &setSemesterEndDate(int, int, int);
+
+        //get functions - (normally always declared const)
+        string getSemesterName() const;
+        Date getSemesterStartDate() const;
+        Date getSemesterEndDate() const;
+};
+#endif
+
+---------------------------------------------------------------------
+Semester.cpp
+
+//Step 4: Semester Class Implementation (.cppS file) with const member functions
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
+
+#include "Semester.h"
+
+//Semester user-based default constructor
+Semester::Semester(const string& nm, const Date& start, const Date& end) : semesterName(nm), startDate(start), endDate(end)
+{
+
+}
+
+//set functions
+//setName function is now set up to enable cascading
+Semester &Semester::setSemesterName(string nm)
+{
+    semesterName = nm;
+    return *this;
+}
+
+//setStartDate function is now set up to enable cascading
+Semester &Semester::setSemesterStartDate(int month, int day, int year) 
+{
+    //cout << "(";
+    startDate.setMonth(month);
+    startDate.setDay(day);
+    startDate.setYear(year);
+    
+    return *this;
+}
+
+//setEndDate function is now set up to enable cascading
+Semester &Semester::setSemesterEndDate(int month, int day, int year) 
+{
+    endDate.setMonth(month);
+    endDate.setDay(day);
+    endDate.setYear(year);
+    //cout << ")";
+    return *this;
+}
+
+string Semester::getSemesterName() const 
+{
+    return semesterName;
+}
+
+Date Semester::getSemesterStartDate() const 
+{
+    return startDate;
+}
+
+Date Semester::getSemesterEndDate() const 
+{
+    return endDate;
+}
+
+//overloaded stream insertion operator << is now set up to enable cascading for class Semester
+//as shown by ostream &operator<<(ostream& output, const Semester& sem) and returning
+//output
+ostream &operator <<(ostream& output, const Semester& sem)
+{
+    output << "Semester: " << sem.semesterName << " "
+        << " (" << sem.startDate << "-" << sem.endDate << ")";
+    return output;
+}
+
+//overloaded stream extraction operator >> is now set up to enable cascading for class Semeseter
+//as shown by istream &operator>>(istream& input, Semester& sem) and returning
+//input
+istream &operator >>(istream& input, Semester& sem)
+{
+    input >> sem.semesterName;
+    input.ignore(2); //ignores " ("
+    input >> sem.startDate;
+    input.ignore(); //ignores "-"
+    input >> sem.endDate;
+    return input;
+}
+---------------------------------------------------------------------
+CourseSchedule.h
+//Step 5: CourseSchedule Class Definition/Header (.h file) with const member functions
+#ifndef COURSESCHEDULE_H
+#define COURSESCHEDULE_H
+
+#include "Date.h"
+#include "Time.h"
+#include "Course.h"
+#include "Semester.h"
+
+using namespace std;
+
+class CourseSchedule
+{
+    //7. Overload the << operator for this class.
+    friend ostream &operator<<(ostream&, const CourseSchedule&);
+
+    private:
+        string studentName; //A student name (the name of the student this schedule if for)
+        Semester semester; //A Semester object
+        Course *coursePointer; //A pointer to a Course.
+        int maxSize; //A maxSize variable that indicates the maximum number of courses that can be added to this student schedule (the array of Courses)
+        int numCourses;   // A numCourses variable that keeps track of how many courses have been added to the student schedule. (the aray of Courses)
+        bool checkDates(const Semester&, const Date&, const Date&) const; //5. Create a utility functions named checkDates that takes three arguments: a Semester instance, a beginning course 
+                                                                          //Date instance and an ending course Date instance. The function should check to make sure the start date of the class
+                                                                          //and/or the end date of the class are not outside the Semester Dates.
+
+    public:
+        //1. CourseSchedule user-based default constructor with 3 arguments
+        CourseSchedule(const string & = "Student Name", const Semester & = Semester(), int = 0);
+        //CourseSchedule copy constructor prototype
+        CourseSchedule(const CourseSchedule &);
+
+        //2. Create a destructor that de-allocates memory appropriately when a CourseSchedule is destroyed.
+        ~CourseSchedule();
+
+        //4. Create set functions for the following member variables: the student name
+        //set functions - not const since they modify private data
+        void setStudentName(string);
+
+        //3.Create get functions for the following member variables: the student name, the Semseter, and the number of courses.
+        //get functions - (normally always declared const)
+        string getStudentName() const;
+        Semester getSemesterName() const;
+        int getNumCourses() const;
+
+        bool addCourse(const Course&); //6. Create a function named AddCourse that takes a Course as an argument and adds the course to the ClassSchedule array.
+        bool removeCourse(const Course&); //8. Create a function called reomveCourse that allows the user to delete a course from their schedule.
+
+      
+        //overloaded operator(s)
+        //void operator=(const CourseSchedule&) const;
+};
+
+#endif
+---------------------------------------------------------------------
+CourseSchedule.cpp
+//Step 5: CourseSchedule Class Implementaion (.cpp file) with const member functions
+#include <iostream>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+#include "CourseSchedule.h"
+
+//1. CourseSchedule user-based default constructor with 3 arguments
+//CourseSchedule user-based default constructor with a member initiazation list.
+CourseSchedule::CourseSchedule(const string& studentName, const Semester& s, int maxSize) : coursePointer(nullptr), studentName(studentName), semester(s), maxSize(maxSize), numCourses(0)
+{
+    coursePointer = new Course[maxSize]; //Create space for pointer-based array
+}
+
+//CourseSchedule copy constructor
+CourseSchedule::CourseSchedule(const CourseSchedule&) : coursePointer(nullptr), studentName(" "), maxSize(0), numCourses(0)
+{
+
+}
+
+//2. Create a destructor that de-allocates memory appropriately when a CourseSchedule is destroyed.
+CourseSchedule::~CourseSchedule()
+{
+    delete[] coursePointer;
+    //coursePointer = nullptr;
+}
+
+//4. Create set functions for the following member variables: the student name. 
+//Once the other member variables are set once the user should not be allowed to reset them.
+//set functions - not const since they modify private data
+void CourseSchedule::setStudentName(string studentName)
+{
+    this->studentName = studentName;
+}
+
+//3. Create get functions for the following following member variables: the student name, the Semester, and the number of courses.
+//get functions - (normally always declared const)
+string CourseSchedule::getStudentName() const
+{
+    return studentName;
+}
+
+
+Semester CourseSchedule::getSemesterName() const
+{
+    return semester;
+}
+
+
+int CourseSchedule::getNumCourses() const
+{
+    return numCourses;
+}
+
+//5. Create a utility functions named checkDates that takes three arguments: a Semester instance, a beginning course 
+//Date instance and an ending course Date instance. The function should check to make sure the start date of the class
+//and/or the end date of the class are not outside the Semester Dates.
+bool CourseSchedule::checkDates(const Semester& courseDate, const Date& startSemesterDate, const Date& endSemesterDate) const
+{
+    if (courseDate.getSemesterStartDate() > startSemesterDate)
+    {
+        return false;
+    }
+    else if (courseDate.getSemesterEndDate() < endSemesterDate)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+
+bool CourseSchedule::addCourse(const Course& course)
+{
+    if (numCourses < maxSize)
+    {
+        if (checkDates(semester, course.getCourseStartDate(), course.getCourseEndDate()))
+        {
+            for (int count = 0; count < numCourses; count++)
+            {
+                if (coursePointer[count].getCourseNumber() == course.getCourseNumber() &&
+                    coursePointer[count].getCourseName() == course.getCourseName())
+                {
+                    return false; // if the course is already on the schedule, return false so it can't add the same course more than once.
+                }
+            }
+            coursePointer[numCourses] = course;
+            numCourses++;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+}
+
+
+bool CourseSchedule::removeCourse(const Course& course)
+{
+    if (numCourses > 0)
+    {
+        int index = -1;
+        for (int count = 0; count < numCourses; count++)
+        {
+            if (coursePointer[count].getCourseNumber() == course.getCourseNumber() &&
+                coursePointer[count].getCourseName() == course.getCourseName())
+            {
+                index = count;
+            }
+        }
+        if (index != -1)
+        {
+            coursePointer[index] = coursePointer[numCourses - 1];
+            numCourses--;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+//overloaded stream insertion operator << is now set up to enable cascading for class CourseSchedule
+//as shown by ostream &operator<<(ostream& output, const CourseSchedule& schedule1) and returning
+//output
+ostream &operator <<(ostream& output, const CourseSchedule& schedule1)
+{
+    output << "\n\nCLASS SCHEDULE\n"
+        << "------------------------------------------\n"
+        << "Name: " << schedule1.getStudentName() << endl
+        << "Semester: " << schedule1.getSemesterName() << "(" << "______" << ")" << endl
+        << "Number of Classes: " << schedule1.numCourses << endl
+        << "------------------------------------------\n";
+    for (int count = 0; count < schedule1.numCourses; count++)
+    {
+        cout << schedule1.coursePointer[count] << "\n\n";
+    }
+    return output;
+}
+
+//overloaded operator(s)
+//void CourseSchedule::operator=(const CourseSchedule&) const
+//{
+
+//}
+---------------------------------------------------------------------
+
+
